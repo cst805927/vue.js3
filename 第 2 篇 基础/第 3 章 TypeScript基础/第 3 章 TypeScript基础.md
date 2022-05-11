@@ -265,3 +265,400 @@ enum Direction {
 - 对象类型由属性、调用签名、构造签名、索引签名等成员组成
 - 类和接口类型、数组类型、元组类型、函数类型、构造函数类型都是对象类型
 - TypeScript可以创建对象类型
+
+### 3.3.3 任意类型
+
+- 有时需要描述“在编写应用时还不知道”的变量类型
+  - 使用任意类型来标记这种类型
+
+#### 1. 用any表示任意类型
+
+```
+let notSure: any = 4;
+notSure = "也许是字符串";
+notSure = false; // 现在是Boolean类型
+```
+
+- 任意类型允许在编译期间选择加入和退出类型检查
+- 对象类型的变量只允许被分配任意值
+  - 而不能在它们上面调用任意方法
+  - 这是与任意类型最大的差异
+
+#### 2. 用Object表示任意类型
+
+```
+let notSure: any = 4;
+notSure.ifItExists(); //ifItExists()方法可能在运行时存在
+notSure.toFixed(); //toFixed()方法存在
+
+let prettySure: Object = 4;
+prettySure.toFixed(); //错误，在Object类型中不存在toFixed()方法
+```
+
+- notSure变量所使用的方法在编译期间不会有任何问题
+- prettySure变量会报错，因为toFixed()不是Object类型的方法
+
+#### 3. 演示任意类型的使用
+
+- 有一个数组，该数组中有不用类型的元素
+
+```
+let a:any[] = [1, true, 'free'];
+```
+
+- 可以对该数组中的元素执行替换或追加操作
+  - 替换的元素可以与被替换的元素类型不一致
+
+- 将数组中的true、‘free’元素分别替换为2、3并追加元素4
+
+```
+a[1] = 2;
+a[2] = 3;
+a[3] = 4;
+```
+
+### 3.3.4 联合类型
+
+- 联合类型表示可以将变量设置为多种类型中的一种
+- 联合类型“A|B”的值是类型A或类型B的值
+
+```
+var x: string | number;
+var test: boolean;
+x = "hello"; //正确
+x = 42; //正确
+x = true; // 错误，未关联true
+```
+
+### 3.3.5 交集类型
+
+- 交集类型是把多种类型叠加到一起形成的一种新类型
+  - 新类型包含了被叠加类型的特性
+
+```
+interface A { a: number }
+interface B { b: number }
+
+var ab: A & B = { a: 1, b: 1};
+var a: A = ab; // A可归属于 A & B
+var b: B = ab; // B可归属于 A & B
+
+interface X { p: A }
+interface Y { p: B }
+
+var xy = X & Y = { p: ab } // X & Y有一个A&B类型的属性
+
+type F1 = {a: string, b: string} => void;
+type F2 = {a: number, b: number} => void;
+var f: F1&F2 = (a:string | number, b: string | number) => { };
+
+f("hello", "world"); //正确
+f(1, 2); //正确
+f(1, "test") //错误
+```
+
+## 3.4 强大的面向对象体系
+
+### 3.4.1 类
+
+#### 1. 类的定义与使用
+
+- 使用关键字class来定义类
+
+```
+class Greeter {
+	greeting: string;
+	//构造函数
+	constructor(message: string) {
+		this.greeting = message;
+	}
+	//欢迎方法
+	greet() {
+		return "Hello, " + this.greeting;
+	}
+}
+
+//初始化
+let greeter = new Greeter("Way Lau");
+console.log(greeter.greet());
+```
+
+- 该类具有greeting属性、constructor()构造函数、greet()方法
+- 在引用任何一个类成员时都使用了this
+  - 它表示访问的是类的成员
+- 通过new关键字能够初始化Greeter类的一个实例
+  - 并使用实例的greet()方法
+
+#### 2. 继承
+
+- 类可以被继承
+
+#### 3. public、private与protected修饰符
+
+- 3种修饰符
+  - public修饰符：
+    - 外部可以自由访问该修饰符所标记的成员
+    - 成员默认是public类型
+  - private修饰符：
+    - 不能在声明它的类的外部访问
+  - protected修饰符：
+    - protected成员在派生类中仍然可以被访问
+
+#### 4. 静态属性
+
+- 也可以创建类的静态成员，这些属性属于类本身
+  - 而不是类的实例
+
+```
+class Grid {
+	static origin = {x: 0, y: 0};
+}
+```
+
+- 使用“Grid.”来访问静态属性
+
+#### 5. 抽象类
+
+- 抽象类是其它派生类的基类，它们一般不会直接被实例化
+- 抽象类可以包含成员的实现细节
+
+- abstract关键字用于定义抽象类
+  - 并在抽象类内部定义抽象方法
+
+```
+abstract class AbstractAnimal {
+	abstrcat makeSound(): void;
+	move(): void {
+		console.log("roaming the earch");
+	}
+}
+```
+
+- 抽象类中的抽象方法不包含具体实现
+  - 并且必须在派生类中实现
+- 抽象方法必须包含abstract关键字
+  - 并且可以包含访问修饰符
+
+```
+abstract class Department {
+	constructor(public name: string) {}
+	printName():void {}
+	abstract printMeeting():void;//必须在派生类中实现
+}
+
+class AccountingDepartment extends Department {
+	constructor() {
+		super('Accountinf and Auditing');
+	}
+	printMeeting():void {}
+	generateReports():void {}
+}
+```
+
+### 3.4.2 接口
+
+- 接口用于约定代码或第三方代码是如何被执行、调用的
+- 接口也可以通过继承来实现扩展
+
+### 3.4.3 实战演示接口的使用
+
+#### 1. 接口定义
+
+- 可以使用interface关键字来定义接口
+
+```
+interface ClockInterface {
+	currentTime: Date;
+}
+```
+
+#### 2. 接口实现
+
+- 使用implements关键字来实现接口
+
+```
+class Clock implements ClockInterface {
+	currentTime: Date;
+	constructor(h: number, m: number) {}
+}
+```
+
+#### 3. 接口继承
+
+```
+interface Shape {
+	color: string;
+}
+
+interface Square extends Shape {
+	sideLength: number;
+}
+
+let square = <Square>{}
+square.color = "blue";
+square.sideLength = 10;
+```
+
+### 3.4.4 泛型
+
+- 组件不仅支持当前的数据类型，也能支持未来的数据类型
+- 使用泛型就能创建可重用的组件
+
+### 3.4.5 实战演示泛型的使用
+
+- identity()函数会返回任何传入它的值
+
+#### 1. 不适用泛型的情况
+
+```
+function identity(arg: number): number {
+	return arg;
+}
+```
+
+- 或者使用any类型来定义identity()函数
+
+```
+function identity(arg: any): any {
+	return arg;
+}
+```
+
+- 虽然使用any类型后identity()函数能接收任何类型的arg参数
+  - 但是无法保证传入的参数类型与返回值的类型相同
+
+#### 2. 使用泛型的情况
+
+```
+function identity<T>(arg: T): T {
+	return arg;
+}
+```
+
+- 给identity添加一个类型变量T
+- T用于捕获用户传入的类型（如Number）
+  - 可以使用T作为返回值的类型
+- 通过两种方法使用它
+- 第一种是传入所有的参数，包括类型参数
+
+```
+let ouput = identity<string>("I am a String");
+```
+
+- 第二种是利用类型推导，可以省略显示传入类型
+  - 编译器会根据传入的参数自动确定T的类型
+  - （这种方法更普遍）
+
+```
+let output = identity("I am a String");
+```
+
+### 3.4.6 枚举
+
+- 枚举类型通过enum关键字来定义
+
+```
+enum Direction {
+	Up = 1,
+	Down = 2,
+	Left = 3,
+	Right = 4
+}
+```
+
+- 一个枚举类型可以包含0个或多个枚举成员
+- 枚举成员具有一个数值
+  - 它可以是常量或通过计算得出的值
+- 当满足以下任何一个条件时，枚举成员被当作常量
+  - 不具有初始化函数，并且之前的枚举成员是常量
+    - 当前枚举成员的值为上个枚举成员的值加1
+    - 第一个枚举成员初始值为0
+  - 枚举成员使用常量枚举表达式初始化
+    - 常量枚举表达式时TypeScript表达式的子集
+      - 它可以在编译阶段求值
+- 下面实例展示枚举成员被当作通过计算得出的值
+
+```
+enum FileAccess {
+	//常量成员
+	None,
+	Read = 1 << 1,
+	Write = 1 << 2,
+	ReadWrite = Read | Write,
+	//计算出来的成员
+	G = "123".length
+}
+```
+
+## 3.5 TypeScript的命名空间
+
+- 命名空间是一种在命名容器的层次结构中
+  - 组织代码和声明的机制
+- 命名空间具有命名成员
+  - 每个成员表示值、类型、命名空间或它们的组合
+  - 并且这些成员可以是本地成员或导出成员
+- 命名空间的主体对应执行一次的函数
+  - 从而提供用于保持局部状态并确保隔离机制
+- 命名空间可以被认为是
+  - “立即调用的函数表达式（IIFE）模式的形式化”
+- 命名空间可以简单理解为Java的包
+- 在TypeScript中，使用命名空间namespace关键字
+
+### 3.5.1 声明命名空间
+
+- 命名空间可以是实例化的，也可以是非实例化的
+  - 非实例化的命名空间仅包含接口类型、类型别名
+    - 及其它非实例化命名空间的命名空间
+  - 实例化的命名空间是不符合此定义的命名空间
+
+- 实例化的命名空间是为其创建命名空间实例的命名空间
+  - 非实例化的命名空间是不为其生成代码的命名空间
+- 当命名空间标识符被引用为NameSpaceName时，
+  - 它表示命名空间和类型名称的容器
+- 当命名空间标识符被引用为PrimaryExpression时
+  - 它表示命名空间的单实例
+
+### 3.5.2 实战声明命名空间
+
+```
+namespace M {
+	export interface P { x: number; y: number}
+	export var a = 1;
+}
+var p: M.P; // M作为NameSpaceName
+var m = M; // M作为PrimaryExpression
+var x1 = M.a; //M作为PrimaryExpression
+var x2 = m.a; //等同于 M.a
+var q: m.p; // 错误
+```
+
+- 当M作为PrimaryExpression时
+  - 表示M具有单个类型成员a的对象实例
+- 当M作为NameSpaceName时
+  - 表示M具有单个类型成员P的容器
+- m.P是错误的，因为m是一个无法在类型名称中引用的变量
+- 如果M声明排除了导出的变量a
+  - 则M是一个非实例化的命名空间
+  - 将M作为PrimaryExpression引用是错误的
+
+```
+namespace A.B.C {
+	export var x = 1;
+}
+```
+
+- 等同于：
+
+```
+namespace A {
+	export namespace B {
+		export namespace C {
+			export var x = 1;
+		}
+	}
+}
+```
+
+### 3.5.3 命名空间体
+
+- 命名空间体对应执行一次已经初始化命名空间实例的函数
