@@ -749,7 +749,7 @@ namespace M {
 - 如果需要合并命名空间值，则可以通过获取现有命名空间
   - 并将第2个命名空间的导出成员添加到第1个命名空间
 
-### 3.5.8 实战合并声明
+### 3.5.8 【实战】合并声明
 
 ```
 namespace Animals {
@@ -770,5 +770,346 @@ namespace Animals {
 	export class Zebra {}
 	export class Dog {}
 }
+```
+
+- 非导出成员仅在原始（未合并）命名空间可见
+  - 合并后，来自其他声明的合并成员无法看到未导出的成员
+
+```
+namespace Animal {
+	let haveMuscles = true;
+	export function animalHaveMuscles() {
+		return haveMuscles
+	}
+}
+namespace Animal {
+	export function doAnimalsHaveMuscles() {
+		return haveMuscles; 
+		// 错误，haveMuscles不可访问
+	}
+}
+```
+
+- 由于未导出haveMuscles，
+  - 因此只有共享animalHaveMuscles()函数才能看到该成员
+
+## 3.6 TypeScript模块
+
+### 3.6.1 了解模块
+
+- 模块包含代码和声明
+- 模块可以声明它的依赖
+- 模块会把依赖添加到模块加载器上，
+
+### 3.6.2 【实战】导入声明
+
+- 导入声明用于从其他模块导入实体，
+  - 并在当前模块中为它们提供绑定
+
+```
+import * as m from "mod";
+```
+
+- 导入具有给定名称的模块，并为模块本身创建本地绑定
+- 本地绑定被分类为值和命名空间
+
+```
+import { x, y, z } from "mod";
+```
+
+- 本地绑定所指定的名称必须各自引用
+  - “给定模块的导出成员几种的实体”
+  - 否则本地绑定具有与它们所代表的实体相同的名称和分类
+
+```
+import { x as a, y as b } from "mod";
+```
+
+- 以下两种导入声明的方式完全相同
+
+```
+import d from "mod";
+import { default as d } from "mod";
+```
+
+- 以下导入声明的方式适用于导入给定模块
+  - 而不用创建任何本地绑定
+
+```
+import "mod";
+```
+
+### 3.6.3 【实战】导入Require声明
+
+- 导入Require声明是为了方便兼容早期版本的TypeScript
+
+- 导入Require声明引入了引用给定模块的本地标识符
+
+  - 在导入Require声明中指定的字符串文字被解释为模块名称
+  - 声明引入的本地标识符成为从引用模块导出的实体的别名
+
+  - 并且与其类别完全相同
+
+- 如果引出的模块不包含导出分配，
+
+  - 则标识符被分类为值和命名空间
+
+- 如果引用的模块包含导出分配
+
+  - 则标识符的分配与导出分配中指定的实体完全相同
+
+```
+import m = require("mod");
+```
+
+- 等同于ECMAScript2015中的导入声明
+
+```
+import * as m from "mode";
+```
+
+### 3.6.4 【实战】导出声明
+
+- 任何声明都能通过添加export关键字来导出
+
+```
+export function point(x: number, y: number) {
+	return {x, y};
+}
+```
+
+### 3.6.5 【实战】导出分配
+
+- 导出分配是为了兼容早期版本的TypeScript
+- 导出分配将成员指定为要导出的实体来代替模块本身
+- point.ts
+
+```
+export = Point;
+
+class Point {
+	constructor(public x: number, public y: number){}
+	static origin = new Point(0, 0);
+}
+```
+
+- 当point.ts文件被另一个模块导入时，
+  - 导入别名Pt将引用导出的类
+  - 此时Pt既可以作为类型，也可以作为构造函数
+
+```
+import Pt = require("./point");
+var p1 = new Pt(10, 20);
+var p2 = Pt.origin;
+```
+
+### 3.6.6 了解CommonJS模块
+
+### 3.6.7 了解AMD模式
+
+## 3.7 装饰器
+
+- 装饰器（Decorator）提供了一种在类的声明及成员上
+  - 通过元编辑语法添加标注的方式
+- TypeScript中的装饰器类似于Java中的注解
+- 如果想要启用实验性的装饰器特性
+  - 则必须在命令行或tsconfig.json中启用experimentDecorator编译器选项
+- 可以在命令行中启用装饰器选项
+
+```
+tsc --target ES5 --experimentalDecorators
+```
+
+- 如果想要在tsconfig.json中启用装饰器选项，
+  - 则compilerOptions配置如下：
+
+```
+{
+	"compilerOptions": {
+		"target": "ES5",
+		"experimentalDecorators": true
+	}
+}
+```
+
+### 3.7.1 定义装饰器
+
+- 装饰器是一种特殊类型的声明
+- 可以使用“@表达式”这种形式定义装饰器
+  - 表达式求值后必须为一个函数
+  - 它会在运行时被调用，
+  - 被装饰的声明信息作为参数传入
+
+```
+function sealed(constructor: Function) {
+	Object.seal(constructor);
+	Object.seal(constructor.prototype);
+}
+```
+
+- 定义好装饰器后，就可以使用@sealed装饰器
+
+```
+@sealed
+class Greeter {
+	greeting: string;
+	constructor(message: string) {
+		this.greeting = message;
+	}
+	greet() {
+		return "Hello" + this.greeting;
+	}
+}
+```
+
+### 3.7.2 了解装饰器的执行时机
+
+- 多个装饰器可以同时应用到一个声明上
+
+```
+@first @second x
+```
+
+- 也可以将多个装饰器编写在多行代码上
+
+```
+@first()
+@second()
+x
+```
+
+- 当复合first和second时，复合的结果等同于first(second(x))
+- 当多个装饰器应用到一个声明上时，会进行如下操作：
+  - 由上至下依次对装饰器表达式求值
+  - 求值的结果会被当作函数，由下往上依次调用
+
+```
+function first() {
+	console.log("first(): evaluated");
+	
+	return function(target, propertyKey: string, descriptor: PropertyDescriptor) {
+		console.log("first(): called");
+	}
+}
+
+function second() {
+	console.log("second(): evaluated");
+	
+	return function(target, propertyKey: string, descriptor: PropertyDescriptor) {
+		console.log("second(): called");
+	}
+}
+class C {
+	@first()
+	@second()
+	method() {}
+}
+```
+
+- 输出结果如下：
+
+```
+first(): evaluated
+second(): evaluated
+second(): called
+first(): called
+```
+
+### 3.7.3 认识4类装饰器
+
+#### 1. 类装饰器
+
+- 类装饰器声明在一个类声明之前
+- 类装饰器应用在类构造函数上
+  - 可以用来监视、修改、替换类定义
+
+- 类装饰器不能用在声明文件（.d.ts）中
+  - 也不能用在任何外部上下文（如declare类）中
+- 类装饰器表达式会在运行时被当作函数调用
+  - 类的构造函数将作为其唯一的参数
+- 如果类装饰器返回一个值
+  - 则它会使用提供的构造函数来替换类的声明
+
+```
+@sealed
+class DecoratorGreeter {
+	constructor(message: string) {}
+}
+```
+
+#### 2. 方法装饰器
+
+- 方法装饰器声明在一个方法声明之前
+- 方法装饰器不能用在哪里？
+  - 声明文件
+  - 重载
+  - 任何外部上下文
+- 方法装饰器被当作函数调用，传入3个参数
+  - 对于静态成员：类构造函数，
+    - 对于实例成员：类的原型对象
+  - 成员的名字
+  - 成员的属性描述符
+
+```
+class DecoratorGreeter {
+	@enumerable(false)
+	greet() {}
+}
+```
+
+- 定义@enumerable方法装饰器
+
+```
+function enumerable(value: boolean){
+	return function (target: any, propertyKey: string, descriptor: Proper)
+}
+```
+
+#### 3. 属性装饰器
+
+- 属性装饰器声明在一个属性声明之前
+- 属性装饰器不能用在声明文件或任何外部上下文中
+- 属性装饰器表达式会在运行时被当作函数调用，转入两个参数
+  - 对于静态成员：类构造函数
+    - 对于实例成员：类的原型对象
+  - 成员的名字
+
+- 可以使用属性装饰器来记录这个属性对于的元数据
+
+```
+class DecoratorGreeter {
+	@format("Hello, %s")
+	greeting: string;
+}
+```
+
+- 定义@format()属性装饰器
+
+```
+function format(formatString:string) {
+	return Reflect.metadata(formatMetadataKey, formatString);
+}
+```
+
+#### 4. 参数装饰器
+
+- 参数装饰器声明在一个参数声明之前
+- 参数装饰器不能用在声明文件、重载或任何上下文中
+- 参数装饰器运行时被当作函数调用，传入3个参数
+  - 对于静态成员：类的构造函数
+    - 对于实例成员：类的原型对象
+  - 成员的名字
+  - 参数是在函数参数列表中的索引
+
+```
+class DecoratorGreeter {
+	greet(@required name: string) {	}
+}
+```
+
+- 定义@require参数装饰器
+
+```
+function required(target:Objected, propertyKey: string, parameterIndex:number) { }
 ```
 
