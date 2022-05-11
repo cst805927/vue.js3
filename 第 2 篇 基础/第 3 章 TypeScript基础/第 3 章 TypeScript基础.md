@@ -662,3 +662,113 @@ namespace A {
 ### 3.5.3 命名空间体
 
 - 命名空间体对应执行一次已经初始化命名空间实例的函数
+
+### 3.5.4 导入别名声明
+
+- 导入别名声明用于为其他命名空间中的实体创建本地别名
+
+- 由单个标识符组成的EntityName被解析为NameSpaceName
+  - 因此需要引用命名空间
+- 生成本地别名引用给定的命名空间
+  - 并且本身被归类为命名空间
+- 由多个标识符组成的EntityName被解析为NameSpaceName
+  - 后跟一个标识符
+  - 该标识符指定给命名空间中的导出实体
+- 生成的本地别名具有引用实体的所有含义
+  - 就好像导入的实体是使用本地别名在本地声明的一样
+
+### 3.5.5 实战导入别名声明
+
+```
+namespace A {
+	export interface X { s: string }
+	export var X: X;
+}
+
+namespace B {
+	interface A { n: number }
+	import Y = A; // Y仅作为命名空间A的别名
+	import Z = A.X; // Z作为A.X的别名
+	var v: Z = Z;
+}
+```
+
+- 在B中，Y仅是命名空间A的别名
+  - 而不是本地接口A的别名
+- Z是A.X的别名 
+- 如果EntityName的NamespaceName部分引用实例化的命名空间
+  - 则在评估为表达式时，
+    - NameSpaceName需要引用命名空间实例
+
+```
+namespace AA {
+	export interface XX { s: string }
+}
+namespace BB {
+	var AA = 1;
+	import YY = AA;
+}
+```
+
+- YY是非实例化命名空间AA的本地别名
+- 如果更改AA的声明，使得AA成为实例化的命名空间
+  - 则BB中的import YY = AA；是一个错误语句
+    - 因为AA不是命名空间AA的命名空间实例
+- 当import语句包含export修饰符时
+  - 将导出本地别名的所有含义
+
+### 3.5.6 导出声明
+
+- 导出声明用于从外部访问命名空间成员
+- 任何声明都能够通过添加export关键字来导出
+- 在命名空间的导出声明中
+  - 空间的成员构成了命名空间的导出成员集
+- 命名空间的实例类型是一种对象类型
+  - 导出成员集中的每个成员都有一个属性，
+    - 表示一个值
+
+- 导出的成员依赖于一组命名类型
+  - 这些命名类型只是与导出的成员一样可以被访问
+
+```
+interface A { x: string }
+
+namespace M {
+	export interface B { x: A }
+	export interface C { x: B }
+	export function foo(c: C) {}
+}
+```
+
+### 3.5.7 合并声明
+
+- 具有相对与公共根的相同限定名称的命名空间可以被合并为单个命名空间
+- 如果需要合并命名空间，则需要保证在每个命名空间中声明的
+  - 导出接口的类型定义本身已被合并
+  - 形成一个内部具有合并接口定义的命名空间
+- 如果需要合并命名空间值，则可以通过获取现有命名空间
+  - 并将第2个命名空间的导出成员添加到第1个命名空间
+
+### 3.5.8 实战合并声明
+
+```
+namespace Animals {
+	export class Zebra {}
+}
+
+namespace Animals {
+	export interface Legged { numberOfLegs: number; }
+	export class Dog { }
+}
+```
+
+- 等同于合并后的声明：
+
+```
+namespace Animals {
+	export interface Legged { numberOfLegs; number}
+	export class Zebra {}
+	export class Dog {}
+}
+```
+
