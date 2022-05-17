@@ -1,18 +1,9 @@
 <template>
-  <NewsList />
+  <router-view />
 </template>
 
 <script lang="ts">
-  import { Options, Vue } from 'vue-class-component';
-  import NewsList from './components/NewsList.vue';
+import { Vue } from "vue-class-component";
 
-  @Options({
-      components: {
-          NewsList,
-      },
-  })
-  export default class App extends Vue {}
+export default class App extends Vue {}
 </script>
-
-<style>
-</style>
